@@ -11,15 +11,16 @@ http://anna.fi.muni.cz/models/cgi/model_info.cgi?name=sokoban#pmnote
 
 process play is
    states move, done
-   var x : 0..9 := 1,
-       y : 0..5 := 1,
-      a : array 6 of array 10 of nat := [[1,1,1,1,1,1,1,1,1,1],
-                                         [1,0,0,0,1,0,0,0,0,1],
-                                         [1,0,2,0,2,0,0,0,0,1],
-                                         [1,0,2,2,2,1,1,0,0,1],
-                                         [1,0,0,0,0,1,1,1,1,1],
-                                         [1,1,1,1,1,1,1,1,1,1]]
-      
+   var x : 0..7 := 1,
+       y : 0..7 := 1,
+      a : array 6 of array 10 of nat := [[1,1,1,1,1,1,1],
+                                         [1,0,0,0,1,1,1],
+                                         [1,0,2,2,0,0,1],
+                                         [1,2,0,0,2,1,1],
+                                         [1,0,0,1,0,0,1],
+                                         [1,1,0,0,0,0,1],
+                                         [1,1,1,1,1,1,1]]
+
    from move
       select
 	 on a[1][8] = 2 and a[2][7] = 2 and a[2][8] = 2 and a[3][7] = 2 and a[3][8] = 2; to done
