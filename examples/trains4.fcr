@@ -1,0 +1,96 @@
+/*
+   Equivalent to the TPN version in:
+
+   B. Berthomieu, F. Vernadat,
+   "State Class Constructions for Branching Analysis of Time Petri Nets",
+   Tools and Algorithms for the Construction and Analysis of Systems (TACAS'03),
+   Warsaw, Poland, 2003. Springer LNCS 2619.
+*/
+
+
+process barrier [ down, up : sync] is
+   states up, lowering, down, raising
+   from up
+      down;
+      to lowering
+   from lowering
+      wait [1,2];
+      to down
+   from down
+      up;
+      to raising
+   from raising
+      select
+	 wait [1,2];
+	 to up
+      [] down;
+	 to lowering
+      end
+
+process controler [app, exit, down, up : sync] is
+   states waitc, emitdown, emitup
+   var x : int := 0
+   from waitc
+      select
+	 app;
+	 x:=x+1;
+	 if x=1 then
+	    to emitdown
+	 else
+	    to waitc
+	 end
+      [] exit;
+	 x:=x-1;
+	 if x=0 then
+	    to emitup
+	 else
+	    to waitc
+	 end
+      end
+   from emitdown
+      down;
+      to waitc
+   from emitup
+      up;
+      to waitc
+
+process train [app, exit : sync] is
+   states far, close, onn, left
+   from far
+      app;
+      to close
+   from close
+      wait [3,5];
+      to onn
+   from onn
+      wait [2,4];
+      to left
+   from left
+      exit;
+      to far
+
+component system is
+   port app : sync,
+        exit, down, up : sync in [0,0]
+   par * in
+      barrier [down,up]
+   || controler [app,exit,down,up]
+   || par
+         train [app,exit]
+      || train [app,exit]
+      || train [app,exit]
+      || train [app,exit]
+      /* ... (as many trains as desired)  */
+      end
+   end
+
+
+system
+
+
+/*
+property safe is ltl [] (system/3/1/state onn or system/3/2/state onn or system/3/3/state onn or system/3/4/state onn => system/1/state down)
+
+assert safe
+*/
+

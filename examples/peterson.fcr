@@ -1,0 +1,116 @@
+/*
+Peterson's algorithm is a concurrent programming algorithm for mutual exclusion 
+that allows two processes to share a single-use resource without conflict, using 
+only shared memory for communication. It was formulated by Gary Peterson in 1981 
+at the University of Rochester. While Peterson's original formulation worked with
+only two processes, the algorithm can be generalised for more than two, as 
+discussed in "Operating Systems Review, January 1990 ('Proof of a Mutual 
+Exclusion Algorithm', M Hofri)".
+
+see http://wapedia.mobi/en/Peterson%27s_algorithm
+
+The algorithm uses two variables, flag and turn. A flag value of true indicates 
+that the process wants to enter the critical section. The variable turn holds the 
+ID of the process whose turn it is. Entrance to the critical section is granted 
+for process P0 if P1 does not want to enter its critical section or if P1 has 
+given priority to P0 by setting turn to 0.
+
+flag[0] := false 
+flag[1] := false 
+turn := 0 
+
+P0: 
+   flag[0] := true 
+   turn := 1
+   while( flag[1] && turn = 1 );
+       // do nothing 
+   // critical section 
+   ... 
+   // end of critical section
+   flag[0] := false
+   
+P1: 
+   flag[1] := true
+   turn := 0
+   while( flag[0] && turn = 0 );
+       // do nothing 
+   // critical section 
+   ... 
+   // end of critical section
+   flag[1] := false
+    
+*/
+
+
+/* Types */
+
+type id is 0..1
+
+type flag is array 2 of bool
+
+
+/* Processes */
+
+process Proc(pid : id, &flag : flag, &turn : id) is
+   states idle, waits, CS
+   from idle
+      flag[pid] := true ; 
+      turn := 1 - pid ;
+      to waits
+
+   from waits
+      on not (flag[1 - pid] and turn = 1 - pid);
+      to CS
+
+   from CS
+      /* do something in the critical section */
+      flag[pid] := false ;
+      to idle
+
+
+/* Main component */
+
+component Main is
+   var flag : flag := [false, false] ,
+       turn : id := 0
+		
+   par
+      Proc (0, &flag, &turn)
+   || Proc (1, &flag, &turn)
+   end
+
+	
+/* Entry point for verification */
+
+Main
+
+
+
+
+
+/* Properties */
+
+/* Absence of deadlock */
+property ddlfree is deadlockfree
+assert ddlfree
+
+/* Mutual exclusion */
+property mutex is ltl [] not ((Main/1/state CS) and (Main/2/state CS))
+assert mutex
+
+/* fairness */
+/* if pi sets flag[i], then it eventually enter CS */
+property access is ltl ([] (Main/1/value flag[0] => <> Main/1/state CS)
+                    and [] (Main/1/value flag[1] => <> Main/2/state CS))
+assert access
+
+/* idling */
+/* if process 0 does not set flag[0], then it will never enter CS */
+property idling is ltl (([] Main/1/value (not flag[0])) => ([] not Main/1/state CS))
+assert idling
+	
+/* infoften */
+/* processes 0 enters CS infinitely often (not) */
+property infoften is ltl ([] <> Main/1/state CS)
+assert infoften
+

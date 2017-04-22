@@ -1,0 +1,56 @@
+/*
+  A well known logic puzzle described at:
+   http://en.wikipedia.org/wiki/Bridge_and_torch_problem
+*/
+
+
+// d could be replaced by local wait and duplicating man for each delay
+
+process man [d:sync] (&left, &right: 0..2) is
+   states left, right
+   from left
+      on left > 0;
+      left := left - 1;
+      d;
+      to right
+   from right
+      on right > 0;
+      right := right - 1;
+      d;
+      to left
+
+process lamp (&left, &right: 0..2) is
+   states left, right
+   from left
+      on left < 2;
+      left := 0;
+      right := 2;
+      to right
+   from right
+      on right < 2;
+      right := 0;
+      left := 2;
+      to left
+
+component bridge is
+   var left : 0..2 := 2, right : 0..2 := 0
+   port d1: sync in [1,...[,
+        d2: sync in [2,...[,
+        d3: sync in [5,...[,
+        d4: sync in [8,...[
+   par
+       lamp (&left, &right)
+    || man [d1] (&left, &right)
+    || man [d2] (&left, &right)
+    || man [d3] (&left, &right)
+    || man [d4] (&left, &right)
+    end
+
+
+bridge
+
+
+property impossible is ltl ([] not (bridge/2/state right and bridge/3/state right and bridge/4/state right and bridge/5/state right))
+assert impossible
+
+    
