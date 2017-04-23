@@ -11,6 +11,10 @@ process play is
     states move, done
     var x : 0..6 := 1,
         y : 0..6 := 1,
+        /*Map slots:
+        0 = free
+        1 = wall
+        2 = box*/
         a : array 7 of array 7 of nat :=  [[1,1,1,1,1,1,1],
                                            [1,0,0,0,1,1,1],
                                            [1,0,2,2,0,0,1],
@@ -19,27 +23,70 @@ process play is
                                            [1,1,0,0,0,0,1],
                                            [1,1,1,1,1,1,1]],
 
-        b : array 7 of array 7 of nat :=  [[1,1,1,1,1,1,1],
-                                           [1,0,0,0,0,0,1],
-                                           [1,0,0,0,0,0,1],
-                                           [1,0,0,0,0,0,1],
-                                           [1,0,0,0,0,0,1],
-                                           [1,0,0,0,0,0,1],
-                                           [1,1,1,1,1,1,1]]
+        /*Has the robot passed through the slot?
+        0 = Yes
+        1 = No 
+        */
+        visited : array 7 of array 7 of nat :=  [[1,1,1,1,1,1,1],
+                                                 [1,0,0,0,0,0,1],
+                                                 [1,0,0,0,0,0,1],
+                                                 [1,0,0,0,0,0,1],
+                                                 [1,0,0,0,0,0,1],
+                                                 [1,0,0,0,0,0,1],
+                                                 [1,1,1,1,1,1,1]]
 
     from move
         select
-            on b[4][1] = 1 and b[3][3] = 1 and b[5][5] = 1; to done
-         /* moves */
-            [] on a[y][x-1]=0; x := x-1;b[y][x]:=1; to move
-            [] on a[y][x+1]=0; x := x+1;b[y][x]:=1; to move
-            [] on a[y-1][x]=0; y := y-1;b[y][x]:=1; to move
-            [] on a[y+1][x]=0; y := y+1;b[y][x]:=1; to move
-         /* pushes */
-            [] on a[y][x-1]=2 and a[y][x-2]=0; a[y][x-2]:=2; a[y][x-1]:=0; x:=x-1;b[y][x]:=1; to move
-            [] on a[y][x+1]=2 and a[y][x+2]=0; a[y][x+2]:=2; a[y][x+1]:=0; x:=x+1;b[y][x]:=1; to move
-            [] on a[y-1][x]=2 and a[y-2][x]=0; a[y-2][x]:=2; a[y-1][x]:=0; y:=y-1;b[y][x]:=1; to move
-            [] on a[y+1][x]=2 and a[y+2][x]=0; a[y+2][x]:=2; a[y+1][x]:=0; y:=y+1;b[y][x]:=1; to move
+            on visited[4][1] = 1 and visited[3][3] = 1 and visited[5][5] = 1; to done
+         /* movements not pushing anything */
+            [] on a[y][x-1]=0; 
+                x := x-1;
+                visited[y][x]:=1; 
+            to move
+            
+            [] on a[y][x+1]=0; 
+                x := x+1;
+                visited[y][x]:=1; 
+            to move
+            
+            [] on a[y-1][x]=0; 
+                y := y-1;
+                visited[y][x]:=1; 
+            to move
+
+            [] on a[y+1][x]=0; 
+                y := y+1;
+                visited[y][x]:=1; 
+            to move
+         
+         /* movements pushing boxes*/
+            [] on a[y][x-1]=2 and a[y][x-2]=0; 
+                a[y][x-2]:=2; 
+                a[y][x-1]:=0; 
+                x:=x-1;
+                visited[y][x]:=1; 
+            to move
+            
+            [] on a[y][x+1]=2 and a[y][x+2]=0; 
+                a[y][x+2]:=2; 
+                a[y][x+1]:=0; 
+                x:=x+1;
+                visited[y][x]:=1; 
+            to move
+            
+            [] on a[y-1][x]=2 and a[y-2][x]=0; 
+                a[y-2][x]:=2; 
+                a[y-1][x]:=0; 
+                y:=y-1;
+                visited[y][x]:=1; 
+            to move
+            
+            [] on a[y+1][x]=2 and a[y+2][x]=0; 
+                a[y+2][x]:=2; 
+                a[y+1][x]:=0; 
+                y:=y+1;
+                visited[y][x]:=1; 
+            to move
       end
 
 /* Entry point */
